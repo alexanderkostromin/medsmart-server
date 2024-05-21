@@ -1,0 +1,69 @@
+{
+    "version": 1,
+    "disable_existing_loggers": false,
+    "formatters": {
+        "simple": {
+            "format": "%(asctime)s | %(levelname)s: %(message)s @ %(name)s/%(funcName)s:%(lineno)d",
+            "datefmt": "%Y-%m-%dT%H:%M:%S%z"
+        },
+        "json": {
+            "()": "log.formatters.JSONFormatter",
+            "fmt_keys": {
+                "timestamp": "timestamp",
+                "level": "levelname",
+                "message": "message",
+                "logger": "name",
+                "module": "module",
+                "function": "funcName",
+                "line": "lineno",
+                "thread_name": "threadName"
+            }
+        }
+    },
+    "filters": {
+        "no_errors": {
+            "()": "log.filters.NonErrorFilter"
+        }
+    },
+    "handlers": {
+        "stdout": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+            "stream": "ext://sys.stdout",
+            "filters": [
+                "no_errors"
+            ]
+        },
+        "stderr": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+            "stream": "ext://sys.stderr",
+            "level": "WARNING"
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "DEBUG",
+            "formatter": "json",
+            "filename": "/app/log/med-web-server.jsonl",
+            "maxBytes": 5000000,
+            "backupCount": 5
+        },
+        "queue": {
+            "class": "logging.handlers.QueueHandler",
+            "handlers": [
+                "stdout",
+                "stderr",
+                "file"
+            ],
+            "respect_handler_level": true
+        }
+    },
+    "loggers": {
+        "root": {
+            "level": "DEBUG",
+            "handlers": [
+                "queue"
+            ]
+        }
+    }
+}

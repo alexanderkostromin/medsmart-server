@@ -1,0 +1,33 @@
+name: med-exam-web
+
+services:
+  server:
+    restart: on-failure:2
+    build:
+      target: development
+    ports:
+      - '8080:8080'
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+        - action: rebuild
+          path: pyproject.toml
+    volumes:
+      # - ./src:/app/src
+      - ./data:/app/data/dicoms
+      - ./run/log:/app/log
+      - ./run/secrets:/app/secrets
+      - ./run/images:/app/cache/images
+      - ./models:/app/models
+    environment:
+      PRODUCTION: false
+
+  db:
+    restart: "no"
+    # command: ["postgres", "-c", "max_connections=100", "-c", "log_statement=all"]
+    ports:
+      - '54328:5432'
+    volumes:
+      - ./run/pgdata:/var/lib/postgresql/data

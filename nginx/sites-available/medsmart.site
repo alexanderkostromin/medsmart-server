@@ -1,0 +1,54 @@
+server {
+	listen 80;
+	listen [::]:80;
+	server_name medsmart.site www.medsmart.site;
+	return 302 https://$server_name$request_uri;	
+}
+
+server {
+	### SSL configuration
+
+	listen 443 ssl http2;
+	listen [::]:443 ssl http2;
+	ssl_certificate             /etc/letsencrypt/live/medsmart.site/fullchain.pem;
+	ssl_certificate_key         /etc/letsencrypt/live/medsmart.site/privkey.pem;
+	
+	###
+
+	server_name     medsmart.site www.medsmart.site;
+	root            /var/www/med-web/html;
+	index           index.html index.htm index.nginx-debian.html;
+
+    client_max_body_size 0;
+
+    location /api/ {
+        proxy_set_header    Host $http_host;
+        proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_redirect      off;
+        proxy_buffering     off;
+        proxy_pass          http://0.0.0.0:8000;
+    }
+
+    location /static/ {
+        auth_request        /auth;
+        sendfile            on;
+        sendfile_max_chunk  1m;
+        rewrite ^/static/(.*) /$1 break;
+        try_files /cache$uri @backend;
+    }
+
+    location @backend {
+        proxy_pass http://0.0.0.0:8000/api$uri; 
+    }
+
+    location = /auth {
+        internal;
+        proxy_pass              http://0.0.0.0:8000/api/auth/check;
+        proxy_pass_request_body off;
+        proxy_set_header        Content-Length "";
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html =404;
+    }
+}
